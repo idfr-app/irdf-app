@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { browserSupabase } from "@/lib/supabase/client";
 import { PRODUCT } from "@/lib/brand";
@@ -21,7 +21,7 @@ export default function Login() {
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  async function sendCode(e: React.FormEvent) {
+  async function sendCode(e: FormEvent) {
     e.preventDefault();
     setErr(null); setMsg(null); setBusy(true);
     const { error } = await supabase.auth.signInWithOtp({
@@ -34,7 +34,7 @@ export default function Login() {
     setMsg(`We sent a 6-digit code to ${email.trim()}. Enter it below.`);
   }
 
-  async function verify(e: React.FormEvent) {
+  async function verify(e: FormEvent) {
     e.preventDefault();
     setErr(null); setBusy(true);
     const { error } = await supabase.auth.verifyOtp({
