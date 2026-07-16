@@ -2,7 +2,7 @@ import { svc } from "../db";
 import { getConnector } from "../connectors/registry";
 import { probePerception } from "../perception/radar";
 import { seal } from "../ledger";
-import type { BrandCore, Governance, Signal, Snapshot } from "../types";
+import type { BrandCore, Governance, PerceptionSummary, Signal, Snapshot } from "../types";
 
 /**
  * OBSERVE — read every enabled connector into one normalised snapshot, and (on
@@ -71,7 +71,7 @@ export async function observe(
   return { snapshot, snapshotId };
 }
 
-function emptyPerception() {
+function emptyPerception(): PerceptionSummary {
   return {
     probed: false, models: [], presenceRate: null, avgAccuracy: null,
     avgSentiment: null, shareOfVoice: null, gaps: [] as string[],
