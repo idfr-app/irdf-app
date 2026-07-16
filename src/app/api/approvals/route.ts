@@ -1,22 +1,25 @@
 import { NextResponse } from "next/server";
 import { approveQueued, dismissQueued } from "@/lib/orchestrator";
-import { activeTenant } from "@/lib/tenant";
+import { currentUser, getUserTenant } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 /**
- * The one-tap decision on a queued action. Approving executes it now (still
- * gated by the outreach lock for audience-facing types); dismissing drops it.
- * Phase 1: authenticate the caller and stamp their user id as the actor.
+ * One-tap decision on a queued action. Tenant + actor come from the session, so
+ * a user can only decide on their own tenant's actions, and the ledger records
+ * exactly who approved. Approving still honours the outreach lock server-side.
  */
 export async function POST(req: Request) {
+  const user = await currentUser();
+  const tenantId = await getUserTenant();
+  if (!user || !tenantId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
   try {
     const { actionId, decision } = await req.json();
     if (!actionId || !["approve", "dismiss"].includes(decision)) {
       return NextResponse.json({ error: "actionId and decision (approve|dismiss) required" }, { status: 400 });
     }
-    const tenantId = activeTenant();
-    const actor = "console-operator"; // Phase 1: real user id from session
+    const actor = user.email ?? user.id;
 
     if (decision === "dismiss") {
       await dismissQueued(tenantId, actionId, actor);

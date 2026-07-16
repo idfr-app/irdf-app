@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
 import { runCycle } from "@/lib/orchestrator";
-import { activeTenant } from "@/lib/tenant";
+import { svc } from "@/lib/db";
 import { env } from "@/lib/env";
 
 export const runtime = "nodejs";
 
 /**
- * Unattended cycle — the server-side "always-on" heartbeat. Protected by a shared
- * secret so only your scheduler can call it. Wire it to a cron trigger (e.g.
- * Vercel Cron or Supabase pg_cron) at the tenant's cadence.
+ * Unattended heartbeat — the server-side "always-on" cycle. Protected by a shared
+ * secret so only your scheduler can call it (wired via vercel.json → Vercel Cron).
  *
- * Phase 1: iterate every enabled tenant whose cadence is due, rather than the
- * single demo tenant. Autonomy still governs what runs vs. queues — the cron
- * cannot bypass the outreach lock or the mode ceiling.
+ * Runs one cycle for every tenant whose engine is enabled and not killed.
+ * Autonomy still governs what runs vs. queues — cron cannot bypass the mode
+ * ceiling or the outreach lock. Killed engines are skipped.
  */
 async function handle(req: Request) {
   const secret = env.cronSecret();
@@ -24,9 +23,24 @@ async function handle(req: Request) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
   }
+
   try {
-    const result = await runCycle(activeTenant(), "cron");
-    return NextResponse.json(result);
+    const { data: rows } = await svc()
+      .from("governance")
+      .select("tenant_id, enabled, killswitch")
+      .eq("enabled", true)
+      .eq("killswitch", false);
+
+    const results: Array<{ tenant: string; ran: boolean; reason?: string }> = [];
+    for (const g of rows ?? []) {
+      try {
+        const r = await runCycle(g.tenant_id, "cron");
+        results.push({ tenant: g.tenant_id, ran: r.ran, reason: r.reason });
+      } catch (e) {
+        results.push({ tenant: g.tenant_id, ran: false, reason: String(e) });
+      }
+    }
+    return NextResponse.json({ tenants: results.length, results });
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 });
   }

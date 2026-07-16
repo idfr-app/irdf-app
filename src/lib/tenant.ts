@@ -1,11 +1,10 @@
-/** The seeded demo tenant (see 0002_seed.sql). */
-export const DEMO_TENANT = "00000000-0000-0000-0000-000000000001";
-
 /**
- * Phase 1: resolve the active tenant from the signed-in session + memberships,
- * and use the RLS-scoped userClient for all reads. Phase 0 uses DEMO_TENANT so
- * the console runs the moment migrations + env are in place.
+ * Tenant resolution now lives in src/lib/auth.ts (getUserTenant), which derives
+ * the caller's OWN tenant from their Supabase session and provisions a private
+ * workspace on first sign-in. There is no "active demo tenant" any more.
+ *
+ * This id is only the optional seeded sample brand from 0002_seed.sql, kept for
+ * local reference. It has no members, so no signed-in user is ever routed to it.
+ * You can safely delete that tenant row in production.
  */
-export function activeTenant(): string {
-  return process.env.IRDF_DEMO_TENANT || DEMO_TENANT;
-}
+export const SAMPLE_TENANT = "00000000-0000-0000-0000-000000000001";

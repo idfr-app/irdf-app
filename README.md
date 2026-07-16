@@ -1,166 +1,157 @@
-# IRDF-APP — Brand Intelligence & Narrative Engine
+# BI-NET — Brand Intelligence & Narrative Engine Technology
 
-**Phase 0 skeleton.** An embeddable, multi-tenant "brand brain" that runs a
-continuous **Observe → Orient → Generate → Act → Log** loop for any brand, with a
-human in the loop at every step that touches a real audience.
+An embeddable, multi-tenant **brand brain**. BI-NET runs a continuous
+**Observe → Orient → Generate → Act → Log** loop for any brand, with a human in
+the loop at every step that touches a real audience.
 
-This is the generalised, sellable version of VakilLite's IRDF module: the same
-proven loop, lifted out of a single app into a provider-neutral, multi-tenant
-service.
+Two panels:
+- **User panel** (`/app`) — for the brand owner / startup / campaign organiser.
+  Sign in, set your brand, and run the engine on your own workspace.
+- **Admin panel** (`/admin`) — for BI-NET platform operators. Cross-tenant
+  oversight of every brand on the platform.
 
----
-
-## What's in this build
-
-Phase 0 delivers a **deployable skeleton** — the spine everything else hangs off:
-
-- **Orchestrator** — the full OODA cycle (`src/lib/orchestrator/`), schedulable
-  attended (console) or unattended (cron).
-- **AI Router** — one neutral `generate()` in front of Anthropic + OpenAI, with a
-  **deterministic template fallback** so the product runs end to end even with no
-  API keys configured (`src/lib/ai/`).
-- **Guardrails** — an allowlisted action catalogue with per-action risk tiers, the
-  autonomy ceiling (Manual / Semi / Full), daily caps, and the **outreach lock**
-  (`src/lib/guardrails.ts`).
-- **Hash-chained ledger** — a tamper-evident, append-only audit trail. The hash
-  chain is computed **identically in TypeScript and in SQL**, so the database can
-  independently re-verify integrity (`src/lib/ledger.ts`, `verify_ledger()`).
-- **Brand Core** — one accent colour + tone-of-voice + lexicon, injected into both
-  the console theme and every generation prompt (`src/lib/brandCore.ts`,
-  `src/app/theme.ts`).
-- **Connector framework** — a tiny `fetchSignals()` interface; the first connector
-  (web analytics) ships as a shaped stub (`src/lib/connectors/`).
-- **AI-Perception Radar** — the AEO/GEO sensor, stubbed in Phase 0 with the real
-  multi-model probing seam marked for Phase 1 (`src/lib/perception/radar.ts`).
-- **Console** — an instrument-panel dashboard: governance state, reality snapshot,
-  perception radar, approval queue, and the live ledger tail with an integrity
-  seal (`src/app/page.tsx`).
-- **API surface** — `/api/cycle`, `/api/cron`, `/api/approvals`, `/api/killswitch`,
-  `/api/ledger/verify`.
-- **Postgres schema** — every table multi-tenant with row-level security; the
-  ledger append-only via triggers (`supabase/migrations/`).
+Auth is **passwordless email + OTP**: enter your email, get a 6-digit code, you're in.
+Registration and login are the same flow.
 
 ---
 
-## Prerequisites
+## What runs today
 
-- Node.js 18.17+ and npm
-- A Supabase project (free tier is fine), or the Supabase CLI for local dev
-- Optional: an Anthropic and/or OpenAI API key (without them, generation uses the
-  built-in templates)
-
-## Setup
-
-1. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-2. **Configure environment**
-
-   ```bash
-   cp .env.example .env.local
-   # fill in your Supabase URL + keys; AI keys are optional
-   ```
-
-3. **Apply the database schema**
-
-   Run the two migration files in order against your Supabase database — either
-   with the Supabase CLI (`supabase db push`) or by pasting them into the SQL
-   editor:
-
-   - `supabase/migrations/0001_init.sql` — schema, RLS, ledger machinery
-   - `supabase/migrations/0002_seed.sql` — a demo tenant ("VakilLite"), its brand
-     core, one connector, and the ledger genesis block
-
-4. **Run**
-
-   ```bash
-   npm run dev
-   ```
-
-   Open http://localhost:3000. Press **Run one cycle** to drive one full
-   Observe → Orient → Generate → Act → Log pass. Because the seed tenant starts
-   **OFF / Manual / outreach-locked**, everything the cycle proposes lands in the
-   approval queue for you to Approve or Dismiss — nothing reaches an audience
-   without your tap. **Kill switch** disarms the engine and purges the pending
-   queue while preserving the ledger.
-
-> **Offline note:** this package is source only — no `node_modules` and no
-> production build are included (the build environment had networking disabled).
-> `npm install` pulls the dependencies listed in `package.json`.
+- **Real multi-tenant auth** (Supabase Auth, cookie-based SSR). Each new user is
+  provisioned a private workspace (tenant + brand core + governance + ledger
+  genesis) on first sign-in. Row-level security isolates every tenant.
+- **The OODA orchestrator** — attended (console button) or unattended (cron).
+- **AI Router** across Anthropic + OpenAI with a deterministic template fallback,
+  so it works end-to-end even with no AI keys.
+- **Guardrails** — allowlisted actions, risk tiers, autonomy ceiling
+  (Manual/Semi/Full), daily caps, the outreach lock, and a kill switch.
+- **Tamper-evident ledger** — append-only, hash-chained, verified in both
+  TypeScript and SQL.
+- **Brand Core** — one accent + one voice, themed into the console and every asset.
+- **AI-Perception Radar (AEO/GEO)** — schema + flow live; real multi-model probing
+  is the next feature to light up.
 
 ---
 
-## Architecture map
+## Setup / deploy checklist
 
-```
-Integration surface   widget · JS SDK · REST API · MCP · webhooks   (Phase 2–3)
-        │
-Console (one-tone UI)  dashboard · queue · ledger · brand kit        src/app
-        │
-Orchestrator           Observe → Orient → Generate → Act → Log       src/lib/orchestrator
-        │
-   ┌────────────┬──────────────────┬───────────────┬──────────────┐
- Sensor        AI-Perception       AI Router        Guardrails
- connectors    Radar (AEO/GEO)     (multi-model)    truth-anchor + risk
- src/lib/      src/lib/            src/lib/ai       tiers + approval gates
- connectors    perception                           src/lib/guardrails.ts
-        │
-Data + Ledger          tenant store · hash-chained audit · brand core
-        │              supabase/migrations · src/lib/ledger.ts
-Identity & Billing     auth · roles · plans · usage                  (Phase 2)
+You need a Supabase project and (optionally) AI keys. Then:
+
+### 1. Environment variables
+
+Copy `.env.example` → `.env.local` locally, and set the same vars in Vercel
+(Project → Settings → Environment Variables):
+
+| Key | Where |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Settings → API |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Settings → API |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API (**secret**) |
+| `CRON_SECRET` | any long random string |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | optional (absent ⇒ templates) |
+
+### 2. Database — run the migrations in order
+
+In the Supabase SQL editor, run:
+- `supabase/migrations/0001_init.sql`
+- `supabase/migrations/0002_seed.sql` (optional sample brand — safe to skip/delete)
+- `supabase/migrations/0003_auth_and_admin.sql`
+
+### 3. Supabase Auth settings (so email + OTP works)
+
+1. **Authentication → Providers → Email**: enable it.
+2. **Authentication → URL Configuration**: set **Site URL** to your Vercel URL
+   (e.g. `https://your-app.vercel.app`).
+3. **Authentication → Email Templates → Magic Link**: make sure the body shows the
+   code by including the token, e.g.:
+
+   ```html
+   <h2>Your BI-NET sign-in code</h2>
+   <p>Enter this code to sign in:</p>
+   <p style="font-size:24px;font-weight:bold;letter-spacing:3px">{{ .Token }}</p>
+   ```
+
+   (`{{ .Token }}` is the 6-digit code the login screen asks for.)
+
+> **Email at scale:** Supabase's built-in email is rate-limited (a few per hour) —
+> fine for testing. For a commercial launch, connect your own SMTP under
+> **Authentication → Emails → SMTP Settings** (e.g. Resend, SendGrid, Postmark).
+
+### 4. Make yourself the first BI-NET admin
+
+Sign in through the app once (so your user exists), then run this in the Supabase
+SQL editor with your real email:
+
+```sql
+insert into platform_admins (user_id, note)
+select id, 'founder' from auth.users where email = 'you@example.com';
 ```
 
-### How the IRDF patterns were generalised
+Reload `/app` — an **Admin** link appears; `/admin` is now open to you.
 
-| IRDF (single app)                        | IRDF-APP (multi-tenant service)                          |
-| ---------------------------------------- | -------------------------------------------------------- |
-| `IRDF_ACTIONS` catalogue in one file     | `ACTION_CATALOGUE` + risk ranks in `guardrails.ts`       |
-| autonomy dial `_autoCeiling/canAuto`     | `autoCeiling()/canAuto()` scoped per tenant governance   |
-| `_seal/verifyLedger` over localStorage   | Postgres append-only ledger, verified in both TS and SQL |
-| `vlAI.chat()` + template fallback        | `router.generate()` across providers + template fallback |
-| in-memory OODA cycle                     | `runCycle()` persisting snapshots/plans/actions/assets   |
-| single-user state                        | every table scoped by tenant with row-level security     |
+### 5. Run
 
----
+```bash
+npm install     # picks up @supabase/ssr
+npm run dev     # http://localhost:3000
+```
 
-## Autonomy model (the control system)
-
-| Mode   | Runs automatically                    | Waits for a human                          |
-| ------ | ------------------------------------- | ------------------------------------------ |
-| Manual | nothing — proposes only               | everything                                 |
-| Semi   | low-risk, reversible, internal        | anything medium/high-risk or audience-facing |
-| Full   | low + medium, reversible, internal    | high-risk and anything reaching an audience |
-
-Across every mode: audience-facing actions require the **outreach lock** to be
-open, secrets/keys are never touched, and the **kill switch** always works and
-always preserves the ledger.
+`/` is the landing page → **Sign in** → `/app` is your console.
 
 ---
 
-## Roadmap
+## Unattended cycles (cron)
 
-- **Phase 0 (this build)** — multi-tenant skeleton, deployable.
-- **Phase 1** — AI-Perception Radar v1 (real 1–2 model probing), richer
-  blog/social/SEO generation, session-based tenant + roles, Free tier live.
-- **Phase 2** — multi-AI choice + BYOK, Full mode + scheduling + multi-day buffer,
-  AEO/GEO v2 (multi-model + competitors + share-of-voice), gated publishing,
-  billing, embeddable widget + REST API.
-- **Phase 3** — MCP server, agency/multi-brand, white-label, more connectors.
+`vercel.json` schedules `/api/cron` daily. It runs one cycle for **every tenant
+whose engine is enabled and not killed**, protected by `CRON_SECRET`. Autonomy
+still governs what runs vs. queues — cron cannot bypass the mode ceiling or the
+outreach lock.
 
 ---
 
-## Design principles baked into the code
+## Architecture
 
-- **Augmented autonomy** — the machine does the work; the human owns the risk. No
-  blind full autonomy on anything audience-facing.
-- **Truth-anchored** — generation prompts forbid fabricated facts/stats/quotes,
-  ask for sources, and disclose AI assistance on audience-facing assets.
-- **One brand everywhere** — a single accent + tone flows through the console and
-  every generated asset.
-- **Provider-neutral** — pick your AI per task; the product never dies when a
-  provider is absent or fails.
-- **Multi-tenant by construction** — row-level security on every tenant table; the
-  service-role key is server-only and always tenant-scoped.
+```
+Public landing (/)              BI-NET marketing + sign-in
+        │
+Login (/login)                  email → 6-digit OTP → session cookie
+        │
+  ┌─────┴───────────────────────────────────────────────┐
+User panel (/app)                       Admin panel (/admin)
+their own tenant, brand setup,          cross-tenant stats + tenant table,
+OODA loop, approval queue, ledger       gated to platform_admins
+        │
+Orchestrator  Observe → Orient → Generate → Act → Log     src/lib/orchestrator
+        │
+   {Sensor connectors · AI-Perception Radar · AI Router · Guardrails}
+        │
+Data + Ledger + Brand Core (Postgres, RLS, append-only)   supabase/migrations
+        │
+Supabase Auth (cookie SSR)                                src/lib/supabase, src/lib/auth
+```
+
+Product identity ("BI-NET" + full form + accent) has one source of truth:
+`src/lib/brand.ts`.
+
+---
+
+## Roadmap from here
+
+- **AI-Perception Radar v1** — real scheduled probes against live models, scored
+  for presence / accuracy / sentiment / share-of-voice.
+- **Publishing** — gated draft → schedule → publish integrations.
+- **Billing** — Free vs Pro plans, quotas, BYOK keys.
+- **API + embeddable widget + MCP server** — the non-console surfaces for
+  programmatic access.
+- **Admin depth** — suspend / impersonate / plan controls, usage drill-downs,
+  paginated user management (all sealed to each tenant's ledger).
+
+---
+
+## Design principles baked in
+
+Augmented autonomy (human owns the risk), truth-anchored generation (no
+fabrication, sources cited, AI disclosed), one brand everywhere (accent + tone),
+provider-neutral AI (never dies without a key), and multi-tenant by construction
+(RLS on every tenant table; the service-role key is server-only and always
+tenant-scoped).

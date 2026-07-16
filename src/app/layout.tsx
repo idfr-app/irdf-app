@@ -1,27 +1,25 @@
 import "./globals.css";
-import type { ReactNode } from "react";
-import { loadBrandCore } from "@/lib/brandCore";
-import { brandStyle } from "./theme";
-import { DEMO_TENANT } from "@/lib/tenant";
+import type { ReactNode, CSSProperties } from "react";
+import { PRODUCT } from "@/lib/brand";
 
 export const metadata = {
-  title: "IRDF-APP · Brand Brain",
-  description: "See how AI and the internet perceive your brand — then shape it, generate it, and ship it, with you in control.",
+  title: `${PRODUCT.name} — ${PRODUCT.full}`,
+  description: PRODUCT.tagline,
 };
 
-export default async function RootLayout({ children }: { children: ReactNode }) {
-  // Phase 0: theme from the demo tenant's Brand Core. Phase 1 resolves the tenant
-  // from the signed-in session and applies that tenant's accent instead.
-  let style = {};
-  try {
-    const bc = await loadBrandCore(DEMO_TENANT);
-    style = brandStyle(bc);
-  } catch {
-    // env not configured yet — fall back to the CSS default accent.
-  }
+/**
+ * The product shell wears BI-NET's own accent (see src/lib/brand.ts). Inside a
+ * tenant's console (/app), that tenant's Brand Core accent overrides it locally,
+ * so every brand still shows up in its own colour where it matters.
+ */
+export default function RootLayout({ children }: { children: ReactNode }) {
+  const shell = {
+    ["--accent" as string]: PRODUCT.accent,
+    ["--accent-ink" as string]: PRODUCT.accentInk,
+  } as CSSProperties;
   return (
     <html lang="en">
-      <body style={style}>{children}</body>
+      <body style={shell}>{children}</body>
     </html>
   );
 }

@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
 import { verify } from "@/lib/ledger";
-import { activeTenant } from "@/lib/tenant";
+import { getUserTenant } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
-/**
- * Independent integrity proof for the audit ledger. Re-derives the hash chain in
- * the database (verify_ledger) and returns whether it is intact. Useful for
- * compliance exports and external monitors.
- */
+/** Independent integrity proof for the caller's own ledger. */
 export async function GET() {
+  const tenantId = await getUserTenant();
+  if (!tenantId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   try {
-    const result = await verify(activeTenant());
+    const result = await verify(tenantId);
     return NextResponse.json({ ...result, ok: result.ok });
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 });

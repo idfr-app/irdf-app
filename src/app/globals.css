@@ -127,3 +127,110 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .note { font-size: 11px; color: var(--ink-faint); margin-top: 14px; line-height: 1.5; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BI-NET additions: button system, landing, auth, brand kit, admin.
+   All built on the same instrument palette + accent tokens above.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Unified button/link component (works on <a> and <button>) ─────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--sans); font-size: 14px; font-weight: 550; cursor: pointer;
+  padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--panel-2); color: var(--ink);
+  transition: border-color .15s, transform .05s, background .15s;
+}
+.btn:hover { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.ghost { background: transparent; }
+.btn.sm { padding: 7px 12px; font-size: 13px; border-radius: 8px; }
+.btn.wide { width: 100%; margin-top: 6px; }
+
+.mast-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.mast .mast-right .brand { margin-left: 0; }
+
+/* text helpers */
+.mono { font-family: var(--mono); }
+.ok { color: var(--ok); }
+.bad { color: var(--bad); }
+.muted { color: var(--ink-faint); }
+.inline { display: inline; margin-left: 8px; font-size: 12px; }
+
+/* ── Landing ──────────────────────────────────────────────────────────────── */
+.land { max-width: 1000px; margin: 0 auto; padding: 22px 20px 60px; }
+.lnav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 60px; }
+.wordmark { display: inline-flex; align-items: center; gap: 10px; font-size: 18px; letter-spacing: -0.01em; }
+.wordmark .dot { width: 13px; height: 13px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 14px var(--accent); }
+.wordmark.back { color: var(--ink); }
+.hero { max-width: 760px; }
+.hero .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--accent); text-transform: none; }
+.hero h1 { font-size: clamp(30px, 6vw, 52px); line-height: 1.05; letter-spacing: -0.03em; margin: 14px 0 18px; font-weight: 680; }
+.hero .lead { font-size: 17px; color: var(--ink-dim); max-width: 640px; }
+.cta { display: flex; gap: 12px; margin-top: 26px; flex-wrap: wrap; }
+.pillars { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 64px; }
+@media (max-width: 700px) { .pillars { grid-template-columns: 1fr; } }
+.pillar { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+.pillar h3 { margin: 0 0 8px; font-size: 15px; font-weight: 620; }
+.pillar p { margin: 0; font-size: 13.5px; color: var(--ink-dim); }
+.lfoot { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 12px; color: var(--ink-faint); }
+
+/* ── Auth (login) ─────────────────────────────────────────────────────────── */
+.auth { max-width: 420px; margin: 0 auto; padding: 40px 20px; min-height: 100vh; display: flex; flex-direction: column; }
+.auth .wordmark { margin-bottom: 40px; }
+.auth .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 28px; }
+.auth .card h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: -0.01em; }
+.auth .card .sub { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); margin: 0 0 22px; }
+.auth label { display: block; font-size: 12px; color: var(--ink-dim); margin: 0 0 6px; }
+.auth input {
+  width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--panel-2); color: var(--ink); font-family: var(--mono); font-size: 15px; margin-bottom: 4px;
+}
+.auth input:focus { outline: none; border-color: var(--accent); }
+.auth .fine { font-size: 12px; color: var(--ink-faint); margin: 10px 0 0; }
+.auth .ok, .auth .bad { font-size: 13px; margin: 14px 0 0; font-family: var(--mono); }
+.linklike { background: none; border: none; color: var(--ink-dim); font-size: 13px; cursor: pointer; padding: 10px 0 0; text-align: left; }
+.linklike:hover { color: var(--accent); }
+
+/* ── Brand kit form (in the user console) ─────────────────────────────────── */
+.brandkit { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.bk-head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--panel-2); }
+.bk-swatch { width: 32px; height: 32px; border-radius: 8px; flex: none; border: 1px solid rgba(255,255,255,0.15); }
+.bk-name { display: flex; flex-direction: column; line-height: 1.3; }
+.bk-name b { font-size: 14px; }
+.bk-name span { font-size: 11px; color: var(--ink-dim); font-family: var(--mono); }
+.bk-head .btn { margin-left: auto; }
+.bk-body { padding: 16px 14px; display: grid; gap: 14px; }
+.fld { display: flex; flex-direction: column; gap: 6px; }
+.fld.row { flex-direction: row; gap: 14px; align-items: flex-end; }
+.fld.row .grow { flex: 1; }
+.fld label { font-size: 12px; color: var(--ink-dim); }
+.fld .hint { color: var(--ink-faint); font-weight: 400; }
+.fld .hint code { font-family: var(--mono); color: var(--ink-dim); }
+.fld input, .fld textarea {
+  padding: 10px 12px; border-radius: 9px; border: 1px solid var(--line);
+  background: var(--panel-2); color: var(--ink); font-family: var(--mono); font-size: 13px; width: 100%;
+}
+.fld input[type="color"] { padding: 4px; height: 40px; width: 52px; cursor: pointer; }
+.fld input:focus, .fld textarea:focus { outline: none; border-color: var(--accent); }
+.bk-actions { display: flex; align-items: center; gap: 8px; }
+
+/* ── Admin ────────────────────────────────────────────────────────────────── */
+.mark.admin { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.statgrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 20px; }
+@media (max-width: 820px) { .statgrid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 480px) { .statgrid { grid-template-columns: repeat(2, 1fr); } }
+.stat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.stat .num { font-size: 26px; font-weight: 680; letter-spacing: -0.02em; }
+.stat .lbl { font-size: 11px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+.tbl { font-size: 13px; }
+.tr { display: grid; grid-template-columns: 1.6fr 1.8fr 0.7fr 0.7fr 0.8fr 0.8fr 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); align-items: center; }
+.tr.th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-faint); border-bottom: 1px solid var(--line); }
+.tr span { overflow: hidden; text-overflow: ellipsis; }
+.tr b { display: block; font-weight: 600; }
+.tr em { font-style: normal; font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+.tr .mono { font-size: 12px; color: var(--ink-dim); }
+@media (max-width: 820px) { .tbl { overflow-x: auto; } .tr { min-width: 720px; } }
